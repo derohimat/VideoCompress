@@ -6,7 +6,7 @@
  * Copyright Nikolai Kudashov, 2013-2014.
  */
 
-package com.yovenny.videocompress;
+package com.kubedo.videocompress;
 
 import android.annotation.TargetApi;
 import android.media.MediaCodec;

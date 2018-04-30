@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yovenny.videocompress;
+package com.kubedo.videocompress;
 
 import android.annotation.TargetApi;
 import android.graphics.SurfaceTexture;

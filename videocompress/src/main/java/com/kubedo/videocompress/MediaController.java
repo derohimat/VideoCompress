@@ -1,4 +1,4 @@
-package com.yovenny.videocompress;
+package com.kubedo.videocompress;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 @SuppressLint("NewApi")
 public class MediaController {
 
+    static final int COMPRESS_QUALITY_HIGH = 1;
+    static final int COMPRESS_QUALITY_MEDIUM = 2;
+    static final int COMPRESS_QUALITY_LOW = 3;
+
     public final static String MIME_TYPE = "video/avc";
     private final static int PROCESSOR_TYPE_OTHER = 0;
     private final static int PROCESSOR_TYPE_QCOM = 1;
@@ -29,6 +33,10 @@ public class MediaController {
 
     static {
         System.loadLibrary("compress");
+    }
+
+    interface CompressProgressListener {
+        void onProgress(float percent);
     }
 
     public static MediaController getInstance() {
@@ -74,43 +82,12 @@ public class MediaController {
     }
 
 
-
     private void didWriteData(final boolean last, final boolean error) {
         final boolean firstWrite = videoConvertFirstWrite;
         if (firstWrite) {
             videoConvertFirstWrite = false;
         }
     }
-//
-//    public static class VideoConvertRunnable implements Runnable {
-//
-//        private String videoPath;
-//
-//        private VideoConvertRunnable(String videoPath) {
-//            this.videoPath = videoPath;
-//        }
-//
-//        public static void runConversion(final String videoPath) {
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        VideoConvertRunnable wrapper = new VideoConvertRunnable(videoPath);
-//                        Thread th = new Thread(wrapper, "VideoConvertRunnable");
-//                        th.start();
-//                        th.join();
-//                    } catch (Exception e) {
-//                        Log.e("tmessages", e.getMessage());
-//                    }
-//                }
-//            }).start();
-//        }
-//
-//        @Override
-//        public void run() {
-//            MediaController.getInstance().convertVideo(videoPath);
-//        }
-//    }
 
     public static MediaCodecInfo selectCodec(String mimeType) {
         int numCodecs = MediaCodecList.getCodecCount();
@@ -134,14 +111,6 @@ public class MediaController {
         }
         return lastCodecInfo;
     }
-
-//    public void scheduleVideoConvert(String path) {
-//        startVideoConvertFromQueue(path);
-//    }
-//
-//    private void startVideoConvertFromQueue(String path) {
-//        VideoConvertRunnable.runConversion(path);
-//    }
 
     @TargetApi(16)
     private long readAndWriteTrack(MediaExtractor extractor, MP4Builder mediaMuxer, MediaCodec.BufferInfo info, long start, long end, File file, boolean isAudio) throws Exception {
@@ -220,7 +189,7 @@ public class MediaController {
     }
 
     @TargetApi(16)
-    public boolean convertVideo(final String path,String outPath) {
+    public boolean convertVideo(final String path, String outPath,  int quality, CompressProgressListener listener) {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(path);
         String width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
@@ -230,14 +199,35 @@ public class MediaController {
         long startTime = -1;
         long endTime = -1;
 
-        int resultWidth = 640;
-        int resultHeight = 360;
-
         int rotationValue = Integer.valueOf(rotation);
         int originalWidth = Integer.valueOf(width);
         int originalHeight = Integer.valueOf(height);
 
-        int bitrate = 921600;//450000;
+        int resultWidth;
+        int resultHeight;
+        int bitrate;
+        switch (quality) {
+            default:
+            case COMPRESS_QUALITY_HIGH:
+                resultWidth = originalWidth * 2 / 3;
+                resultHeight = originalHeight * 2 / 3;
+                bitrate = resultWidth * resultHeight * 30;
+                break;
+            case COMPRESS_QUALITY_MEDIUM:
+                resultWidth = originalWidth / 2;
+                resultHeight = originalHeight / 2;
+                bitrate = resultWidth * resultHeight * 10;
+                break;
+            case COMPRESS_QUALITY_LOW:
+                resultWidth = originalWidth / 2;
+                resultHeight = originalHeight / 2;
+                bitrate = (resultWidth/2) * (resultHeight/2) * 10;
+                break;
+        }
+
+
+
+
         int rotateRender = 0;
 
         File cacheFile = new File(outPath);
@@ -577,7 +567,7 @@ public class MediaController {
                                                             ByteBuffer rgbBuf = outputSurface.getFrame();
                                                             ByteBuffer yuvBuf = encoderInputBuffers[inputBufIndex];
                                                             yuvBuf.clear();
-                                                            CovertUtil.convertVideoFrame(rgbBuf, yuvBuf, colorFormat, resultWidth, resultHeight, padding, swapUV);
+                                                            ConvertUtil.convertVideoFrame(rgbBuf, yuvBuf, colorFormat, resultWidth, resultHeight, padding, swapUV);
                                                             encoder.queueInputBuffer(inputBufIndex, 0, bufferSize, info.presentationTimeUs, 0);
                                                         } else {
                                                             Log.e("tmessages", "input buffer not available");

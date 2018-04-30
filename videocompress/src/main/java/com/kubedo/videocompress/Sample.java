@@ -6,7 +6,7 @@
  * Copyright Nikolai Kudashov, 2013-2014.
  */
 
-package com.yovenny.videocompress;
+package com.kubedo.videocompress;
 
 public class Sample {
     private long offset = 0;
