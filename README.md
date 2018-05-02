@@ -8,8 +8,34 @@
 ```
 
 ## Usage
+### Call compressVideoLow, compressVideoMedium and compressVideoHigh that indicates 3 quality of compressing.
 
 ```java
-   //in a new Thread
-   boolean isCompressSuccess=MediaController.getInstance().convertVideo(inPath,outPath);
-```
+VideoCompressTask task = VideoCompress.compressVideoLow(tv_input.getText().toString(), destPath, new VideoCompress.CompressListener() {
+                    @Override
+                    public void onStart() {
+                        //Start Compress
+                    }
+
+                    @Override
+                    public void onSuccess() {
+                        //Finish successfully
+                    }
+
+                    @Override
+                    public void onFail() {
+                        //Failed
+                    }
+                    
+                    
+                    @Override
+                    public void onCancel() {
+                        //Canceled by user
+                    }
+
+                    @Override
+                    public void onProgress(float percent) {
+                        //Progress
+                    }
+                });
+```                
