@@ -1,6 +1,7 @@
 package com.kubedo.videocompress;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class VideoCompress {
 
@@ -22,13 +23,19 @@ public class VideoCompress {
         return task;
     }
 
-    private static class VideoCompressTask extends AsyncTask<String, Float, Boolean> {
+    public static class VideoCompressTask extends AsyncTask<String, Float, Boolean> {
         private CompressListener mListener;
         private int mQuality;
+        private boolean wasCanceled = false;
 
         public VideoCompressTask(CompressListener listener, int quality) {
             mListener = listener;
             mQuality = quality;
+        }
+
+        public void cancel() {
+            wasCanceled = true;
+            MediaController.getInstance().cancelVideoConvert();
         }
 
         @Override
@@ -61,7 +68,9 @@ public class VideoCompress {
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             if (mListener != null) {
-                if (result) {
+                if (wasCanceled) {
+                    mListener.onCancel();
+                } else if (result) {
                     mListener.onSuccess();
                 } else {
                     mListener.onFail();
@@ -76,6 +85,8 @@ public class VideoCompress {
         void onSuccess();
 
         void onFail();
+
+        void onCancel();
 
         void onProgress(float percent);
     }
