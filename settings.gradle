@@ -1,1 +1,1 @@
-include ':videocompress'
+include ':app', ':videocompress'
